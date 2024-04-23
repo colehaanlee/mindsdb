@@ -5,6 +5,8 @@ import jaydebeapi as jdbcconnector
 from mindsdb_sql import parse_sql
 from mindsdb_sql.parser.ast.base import ASTNode
 import pandas as pd
+import pyodbc
+import numpy as np
 
 from mindsdb.integrations.libs.base import DatabaseHandler
 from mindsdb.integrations.libs.const import HANDLER_CONNECTION_ARG_TYPE as ARG_TYPE
@@ -25,7 +27,7 @@ class AltibaseHandler(DatabaseHandler):
 
     name = 'altibase'
 
-    def __init__(self, name: str, connection_data: Optional[dict]):
+    def __init__(self, name: str, connection_data: Optional[dict], **kwargs):
         """ constructor
         Args:
             name (str): name of particular handler instance
@@ -39,7 +41,8 @@ class AltibaseHandler(DatabaseHandler):
         self.database = self.connection_args.get('database')
         self.host = self.connection_args.get('host')
         self.port = self.connection_args.get('port')
-        
+        self.dsn = self.connection_args.get('dsn')
+
         self.connection = None
         self.is_connected = False
 
@@ -52,7 +55,34 @@ class AltibaseHandler(DatabaseHandler):
         """
         if self.is_connected is True:
             return self.connection
-                
+
+        if self.dsn is not None:
+            return self.connect_with_odbc()
+        else:
+            return self.connect_with_jdbc()
+
+    def connect_with_odbc(self):
+        """ Set up any connections required by the handler
+        Should return output of check_connection() method after attempting connection.
+        Should switch self.is_connected.
+        Returns:
+            connection
+        """
+        try:
+            self.connection = pyodbc.connect(f"DSN={self.dsn}", timeout=10)
+            self.is_connected = True
+        except Exception as e:
+            logger.error(f"Error while connecting to {self.database}, {e}")
+        
+        return self.connection
+
+    def connect_with_jdbc(self):
+        """ Set up any connections required by the handler
+        Should return output of check_connection() method after attempting connection.
+        Should switch self.is_connected.
+        Returns:
+            connection
+        """
         user = self.connection_args.get('user')
         password = self.connection_args.get('password')
         jar_location = self.connection_args.get('jdbcJarLocation')
@@ -126,6 +156,11 @@ class AltibaseHandler(DatabaseHandler):
                 cur.execute(query)
                 if cur.description:
                     result = cur.fetchall() 
+
+                    if self.dsn is not None:
+                        if len(result) > 0:
+                            result = np.array(result)
+
                     response = Response(
                         RESPONSE_TYPE.TABLE,
                         data_frame=pd.DataFrame(
@@ -179,7 +214,7 @@ class AltibaseHandler(DatabaseHandler):
             WHERE 
                 user_id = USER_ID();
             '''
-    
+
         return self.native_query(query)
 
     def get_columns(self, table_name: str) -> Response:
@@ -233,6 +268,10 @@ connection_args = OrderedDict(
         'type': ARG_TYPE.PATH,
         'description': 'The location of the Altibase JDBC driver jar file'
     },
+    dsn = {
+        'type': ARG_TYPE.STR,
+        'description': 'Datasource name of the Altibase server. NOTE: use dsn if you want ODBC connection. Otherwise, default is JDBC connection.'
+    }
 )
 
 connection_args_example = OrderedDict(

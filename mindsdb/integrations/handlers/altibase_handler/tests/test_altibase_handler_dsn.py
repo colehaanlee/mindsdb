@@ -16,6 +16,7 @@ class AltibaseHandlerTest(unittest.TestCase):
         assert self.handler.connect()
     
     def test_1_drop_table(self):
+        # Not supported 'IF EXISTS' syntax
         res = self.handler.query("DROP TABLE TEST_TABLE")
         assert res.type is RESPONSE_TYPE.OK
 
