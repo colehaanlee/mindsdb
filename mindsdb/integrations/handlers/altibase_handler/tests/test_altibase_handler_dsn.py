@@ -7,7 +7,12 @@ class AltibaseHandlerTest(unittest.TestCase):
     def setUpClass(cls):
         cls.kwargs = {
             "connection_data": {
-                "dsn": "altiodbc"
+                "dsn": "altiodbc",
+                #Override
+                #"host": "127.0.0.1",
+                #"port": 20300,
+                #"user": "sys",
+                #"password": "manager"
             }
         }
         cls.handler = AltibaseHandler('test_altibase_handler', **cls.kwargs)

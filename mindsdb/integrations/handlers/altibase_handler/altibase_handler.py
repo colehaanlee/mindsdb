@@ -41,6 +41,8 @@ class AltibaseHandler(DatabaseHandler):
         self.database = self.connection_args.get('database')
         self.host = self.connection_args.get('host')
         self.port = self.connection_args.get('port')
+        self.user = self.connection_args.get('user')
+        self.password = self.connection_args.get('password')
         self.dsn = self.connection_args.get('dsn')
 
         self.connection = None
@@ -56,7 +58,7 @@ class AltibaseHandler(DatabaseHandler):
         if self.is_connected is True:
             return self.connection
 
-        if self.dsn is not None:
+        if self.dsn:
             return self.connect_with_odbc()
         else:
             return self.connect_with_jdbc()
@@ -68,8 +70,21 @@ class AltibaseHandler(DatabaseHandler):
         Returns:
             connection
         """
+        conn_str = [f"DSN={self.dsn}"]
+
+        if self.host:
+            conn_str.append(f"Server={self.host}")
+        if self.port:
+            conn_str.append(f"Port={self.port}")
+        if self.user:
+            conn_str.append(f"User={self.user}")
+        if self.password:
+            conn_str.append(f"Password={self.password}")
+
+        conn_str = ';'.join(conn_str)
+
         try:
-            self.connection = pyodbc.connect(f"DSN={self.dsn}", timeout=10)
+            self.connection = pyodbc.connect(conn_str, timeout=10)
             self.is_connected = True
         except Exception as e:
             logger.error(f"Error while connecting to {self.database}, {e}")
@@ -83,18 +98,16 @@ class AltibaseHandler(DatabaseHandler):
         Returns:
             connection
         """
-        user = self.connection_args.get('user')
-        password = self.connection_args.get('password')
         jar_location = self.connection_args.get('jdbcJarLocation')
 
         jdbc_class = self.connection_args.get('jdbcClass', 'Altibase.jdbc.driver.AltibaseDriver')
         jdbc_url = f"jdbc:Altibase://{self.host}:{self.port}/{self.database}"
 
         try:
-            if user and password and jar_location: 
-                connection = jdbcconnector.connect(jclassname=jdbc_class, url=jdbc_url, driver_args=[user, password], jars=jar_location.split(","))
-            elif user and password: 
-                connection = jdbcconnector.connect(jclassname=jdbc_class, url=jdbc_url, driver_args=[user, password])
+            if self.user and self.password and jar_location: 
+                connection = jdbcconnector.connect(jclassname=jdbc_class, url=jdbc_url, driver_args=[self.user, self.password], jars=jar_location.split(","))
+            elif self.user and self.password: 
+                connection = jdbcconnector.connect(jclassname=jdbc_class, url=jdbc_url, driver_args=[self.user, self.password])
             elif jar_location: 
                 connection = jdbcconnector.connect(jclassname=jdbc_class, url=jdbc_url, jars=jar_location.split(","))
             else:
