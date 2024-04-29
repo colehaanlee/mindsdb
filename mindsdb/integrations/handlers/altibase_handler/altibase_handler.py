@@ -170,7 +170,7 @@ class AltibaseHandler(DatabaseHandler):
                 if cur.description:
                     result = cur.fetchall() 
 
-                    if self.dsn is not None:
+                    if self.dsn:
                         if len(result) > 0:
                             result = np.array(result)
 
@@ -283,7 +283,7 @@ connection_args = OrderedDict(
     },
     dsn = {
         'type': ARG_TYPE.STR,
-        'description': 'Datasource name of the Altibase server. NOTE: use dsn if you want ODBC connection. Otherwise, default is JDBC connection.'
+        'description': 'Datasource name of the Altibase server. NOTE: use dsn if you want to use an ODBC connection.'
     }
 )
 

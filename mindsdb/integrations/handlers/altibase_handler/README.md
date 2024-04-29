@@ -7,7 +7,7 @@ ALTIBASE is a hybrid database, relational open source database management system
 
 ## Implementation
 This handler was implemented using the JDBC drivers provided by Altibase. To establish connection with the database, `JayDeBeApi` library is used. The `JayDeBeApi` module allows you to connect from Python code to databases using Java JDBC.
-Additionally, ODBC connection is also possible using the `pyodbc` library. The `pyodbc` module allows you to connect from Python code to databases using ODBC.
+It is also possible to connect to the database using the ODBC driver. `pyodbc` library is used to connect to the database.
 
 ### The required arguments to establish a connection are:
 * `host`: host to server IP Address or hostname
@@ -18,7 +18,7 @@ Additionally, ODBC connection is also possible using the `pyodbc` library. The `
 * `user`: username asscociated with database
 * `password`: password to authenticate your access
 * `jar_location`: Jar filename for the JDBC driver
-* `dsn`: datasource name of the Altibase server. Use dsn if you want ODBC connection.
+* `dsn`: datasource name of the Altibase server. Use dsn if you want to use an ODBC connection.
 
 
 ## Usage
@@ -41,7 +41,20 @@ CREATE DATABASE altibase_datasource
 WITH
 engine='Altibase',
 parameters={
+    "dsn":"altiodbc"
+};
+~~~~
+
+~~~~sql
+CREATE DATABASE altibase_datasource
+WITH
+engine='Altibase',
+parameters={
     "dsn":"altiodbc",
+    "user":"sys",
+    "password":"manager",
+    "host":"127.0.0.1",
+    "port":20300
 };
 ~~~~
 
